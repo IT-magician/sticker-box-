@@ -5,14 +5,6 @@ function moveAt(container, pageX, pageY) {
   container.style.top = pageY - shiftY + "px";
 }
 
-function enterDroppable(container) {
-  container.style.background = "pink";
-}
-
-function leaveDroppable(container) {
-  container.style.background = "";
-}
-
 draggableContainers.forEach((container) => {
   let isMouseDownStatus = false;
   let shiftX = 0;
@@ -25,9 +17,23 @@ draggableContainers.forEach((container) => {
   }
 
   function onMouseMove(event) {
-    // moveAt(container, event.pageX, event.pageY);
+    moveAt(container, event.pageX, event.pageY);
   }
 
+
+  function removeOnMouseMove() {
+    document.removeEventListener("mousemove", onMouseMove);
+    container.onmouseup = null;
+  }
+
+
+  /**
+   * 가장 가까운 위치를 찾아줌(자기자신, 같은 부모에 있는 자식, 자식이 없는 부모, 자식이 한개 이상 있는 다른 부모의 자식)
+   * 
+   * @param {Node} container 
+   * @param {e.clientY} y 
+   * @returns 
+   */
   function getDragAfterElement(container, y) {
     const draggableElements = [
       ...container.querySelectorAll(".draggable:not(.dragging)"),
@@ -48,63 +54,33 @@ draggableContainers.forEach((container) => {
     ).element;
   }
 
-  // container.addEventListener("mousedown", (event) => {
-  //   shiftX = event.clientX - container.getBoundingClientRect().left;
-  //   shiftY = event.clientY - container.getBoundingClientRect().top;
-
-  //   container.style.position = "absolute";
-  //   container.style.zIndex = 1000;
-  //   document.body.append(container);
-
-  //   moveAt(container, event.pageX, event.pageY);
-
-  //   document.addEventListener("mousemove", onMouseMove);
-  // });
-
-  function removeOnMouseMove() {
-    document.removeEventListener("mousemove", onMouseMove);
-    container.onmouseup = null;
-  }
-  // container.onmouseup = removeOnMouseMove;
-
-  // container.addEventListener("mouseover", (e) => {
-  //   // removeOnMouseMove();
-
-  //   console.log("mouseover");
-  // });
-
-  // container.addEventListener("mouseup", (e) => {
-  //   console.log("mouseup", isMouseDownStatus);
-  //   isMouseDownStatus = false;
-
-  //   removeOnMouseMove();
-  // });
-
   container.addEventListener("dragstart", (e) => {
     if (e.target.classList.contains("draggable")) {
       e.target.classList.add("dragging");
+
+      console.log("dragstart");
     }
   });
 
   container.addEventListener("dragover", (e) => {
-    if (e.target.classList.contains("draggable")) {
-      e.preventDefault();
-      const afterElement = getDragAfterElement(container, e.clientY);
-      const draggable = document.querySelector(".dragging");
+    e.preventDefault();
+    const afterElement = getDragAfterElement(container, e.clientY);
+    const draggable = document.querySelector(".dragging");
 
-      console.log(draggable, afterElement);
-      container.appendChild(draggable);
-      container.insertBefore(draggable, afterElement);
-    }
+    container.appendChild(draggable);
+    container.insertBefore(draggable, afterElement);
+
 
     console.log("dragover");
   });
 
   container.addEventListener("dragend", (e) => {
     if (e.target.classList.contains("draggable")) {
-      e.target.classList.remove("dragging");
 
-      removeOnMouseMove();
+
+      e.target.classList.remove("dragging");
+      console.log("dragstart");
+
     }
   });
 });
