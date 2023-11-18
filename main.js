@@ -1,86 +1,92 @@
 const draggableContainers = document.querySelectorAll(".container");
 
-function moveAt(container, pageX, pageY) {
-  container.style.left = pageX - shiftX + "px";
-  container.style.top = pageY - shiftY + "px";
+function random(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+function debounce(callback, limit = 100) {
+  let timeout;
+  return function (...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      callback.apply(this, args);
+    }, limit);
+  };
 }
 
-draggableContainers.forEach((container) => {
-  let isMouseDownStatus = false;
-  let shiftX = 0;
-  let shiftY = 0;
-  let draggabled = false;
+document.querySelectorAll(".draggable").forEach((element) => {
+  // 마우스의 위치값 저장
+  let x = 0;
+  let y = 0;
 
-  function moveAt(container, pageX, pageY) {
-    container.style.left = pageX - shiftX + "px";
-    container.style.top = pageY - shiftY + "px";
-  }
+  // 마우스 누른 순간 이벤트
+  const mouseDownHandler = function (event) {
+    const ghost = event.target.cloneNode(true);
+    ghost.classList.add("ghost");
+    ghost.innerHTML += "ghost";
+    event.target.after(ghost);
 
-  function onMouseMove(event) {
-    moveAt(container, event.pageX, event.pageY);
-  }
+    // 누른 마우스 위치값을 가져와 저장
+    x = event.clientX;
+    y = event.clientY;
 
+    // 마우스 이동시 초기 위치와의 거리차 계산
+    const dx = event.clientX - x;
+    const dy = event.clientY - y;
 
-  function removeOnMouseMove() {
-    document.removeEventListener("mousemove", onMouseMove);
-    container.onmouseup = null;
-  }
+    // 마우스 이동 거리 만큼 Element의 top, left 위치값에 반영
+    element.style.top = `${element.offsetTop + dy}px`;
+    element.style.left = `${element.offsetLeft + dx}px`;
 
+    console.log(
+      "mouseDownHandler",
+      event.clientX,
+      element.offsetTop,
+      dx,
+      event.clientY,
+      element.offsetLeft,
+      dy
+    );
 
-  /**
-   * 가장 가까운 위치를 찾아줌(자기자신, 같은 부모에 있는 자식, 자식이 없는 부모, 자식이 한개 이상 있는 다른 부모의 자식)
-   * 
-   * @param {Node} container 
-   * @param {e.clientY} y 
-   * @returns 
-   */
-  function getDragAfterElement(container, y) {
-    const draggableElements = [
-      ...container.querySelectorAll(".draggable:not(.dragging)"),
-    ];
+    event.target.style.position = "absolute";
 
-    return draggableElements.reduce(
-      (closest, child) => {
-        const box = child.getBoundingClientRect(); //해당 엘리먼트에 top값, height값 담겨져 있는 메소드를 호출해 box변수에 할당
-        const offset = y - box.top - box.height / 2; //수직 좌표 - top값 - height값 / 2의 연산을 통해서 offset변수에 할당
-        if (offset < 0 && offset > closest.offset) {
-          // (예외 처리) 0 이하 와, 음의 무한대 사이에 조건
-          return { offset: offset, element: child }; // Element를 리턴
-        } else {
-          return closest;
-        }
-      },
-      { offset: Number.NEGATIVE_INFINITY }
-    ).element;
-  }
+    // 마우스 이동 및 해제 이벤트를 등록
+    document.addEventListener("mousemove", mouseMoveHandler);
+    document.addEventListener("mouseup", mouseUpHandler);
+  };
 
-  container.addEventListener("dragstart", (e) => {
-    if (e.target.classList.contains("draggable")) {
-      e.target.classList.add("dragging");
+  const mouseMoveHandler = function (event) {
+    // return;
+    // 마우스 이동시 초기 위치와의 거리차 계산
+    const dx = event.clientX - x;
+    const dy = event.clientY - y;
 
-      console.log("dragstart");
-    }
-  });
+    // 마우스 이동 거리 만큼 Element의 top, left 위치값에 반영
+    element.style.top = `${element.offsetTop + dy}px`;
+    element.style.left = `${element.offsetLeft + dx}px`;
 
-  container.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    const afterElement = getDragAfterElement(container, e.clientY);
-    const draggable = document.querySelector(".dragging");
+    console.log(
+      "mouseMoveHandler",
+      event.clientX,
+      element.offsetTop,
+      dx,
+      event.clientY,
+      element.offsetLeft,
+      dy
+    );
 
-    container.appendChild(draggable);
-    container.insertBefore(draggable, afterElement);
+    // 기준 위치 값을 현재 마우스 위치로 update
+    x = event.clientX;
+    y = event.clientY;
+  };
 
+  const mouseUpHandler = function () {
+    // 마우스가 해제되면 이벤트도 같이 해제
+    document.removeEventListener("mousemove", mouseMoveHandler);
+    document.removeEventListener("mouseup", mouseUpHandler);
 
-    console.log("dragover");
-  });
+    document.querySelector(".draggable.ghost").remove();
+    element.setAttribute("style", "");
+  };
 
-  container.addEventListener("dragend", (e) => {
-    if (e.target.classList.contains("draggable")) {
-
-
-      e.target.classList.remove("dragging");
-      console.log("dragstart");
-
-    }
-  });
+  element.addEventListener("mousedown", mouseDownHandler);
 });
