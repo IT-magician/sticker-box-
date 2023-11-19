@@ -18,12 +18,14 @@ document.querySelectorAll(".draggable").forEach((element) => {
   let x = 0;
   let y = 0;
 
+  let ghost = null;
+
   // 마우스 누른 순간 이벤트
   const mouseDownHandler = function (event) {
-    const ghost = event.target.cloneNode(true);
+    ghost = element.cloneNode(true);
     ghost.classList.add("ghost");
     ghost.innerHTML += "ghost";
-    event.target.after(ghost);
+    element.after(ghost);
 
     // 누른 마우스 위치값을 가져와 저장
     x = event.clientX;
@@ -84,8 +86,8 @@ document.querySelectorAll(".draggable").forEach((element) => {
     document.removeEventListener("mousemove", mouseMoveHandler);
     document.removeEventListener("mouseup", mouseUpHandler);
 
-    document.querySelector(".draggable.ghost").remove();
-    element.setAttribute("style", "");
+    ghost.remove();
+    element.removeAttribute("style");
   };
 
   element.addEventListener("mousedown", mouseDownHandler);
