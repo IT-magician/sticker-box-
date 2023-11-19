@@ -2,8 +2,6 @@
   position: relative;
   min-width: 500px;
   min-height: 500px;
-
-  background-color: aqua;
 }
 
 .container {
@@ -20,8 +18,11 @@
   display: inline-block;
   background-color: green;
 
+  padding: 10px;
+
   /* 경고! : margin은 어느것도 주면 안됨 */
 }
+
 .draggable {
   /* 커서를 이동형식으로 주고, 위치를 절대형식으로 지정 */
   cursor: grab;
@@ -34,49 +35,48 @@
   justify-content: center;
 
   /* 디자인 */
+  background-color: #f3f5f7;
   border: 1px solid #cbd5e0;
-  height: 8rem;
-  width: 8rem;
+  border-radius: 5px;
+  min-width: 8rem;
+  padding: 10px;
 
   /* 경고! : margin은 어느것도 주면 안됨 */
 }
 
-.container:nth-child(n + 1) {
-  background-color: #3288bd;
-}
-
-.container:nth-child(n + 2) {
-  background-color: #66c2a5;
-}
-
-.container:nth-child(n + 3) {
-  background-color: #f46d43;
-}
-
-.container:nth-child(n + 4) {
-  background-color: #fdae61;
-}
-
-.container:nth-child(n + 5) {
-  background-color: #fee08b;
-}
-
-.container:nth-child(n + 6) {
-  background-color: #e6f598;
-}
-
-.container:nth-child(n + 7) {
-  background-color: #abdda4;
-}
-
-.container:nth-child(n + 8) {
-  background-color: #d53e4f;
-}
-
-.container:nth-child(n + 10) {
-  background-color: #5e4fa2;
-}
-
 .draggable > * {
   cursor: default;
+}
+
+.draggable > input[type="text"] {
+  background-color: transparent;
+  color: #222;
+  border: none;
+  cursor: text;
+  margin-right: 10px;
+}
+
+.draggable.ghost {
+  transform: rotate(10deg) translateY(5px);
+}
+.draggable.ghost::after {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  content: "";
+  transform: rotate(-10deg);
+  background-color: red;
+  z-index: -1;
+}
+
+.draggable > input[type="text"]:hover {
+  background-color: transparent;
+  border-bottom: solid #aaa 1px;
+  cursor: text;
+}
+
+.control {
+  margin-bottom: 10px;
 }

@@ -14,32 +14,104 @@ function debounce(callback, limit = 100) {
 (() => {
   const board = document.querySelector(".board");
 
-  let element = null;
+  let stickerCount = 0;
+  let nextPutTop = 30;
+  let nextPutLeft = 0;
+  let stickerColorPallete = [
+    "#3288bd",
+    "#66c2a5",
+    "#f46d43",
+    "#fdae61",
+    "#e6f598",
+    "#abdda4",
+    "#d53e4f",
+    "#5e4fa2",
+  ];
+  let sticker = `<div class="container" style="position: absolute; top: {0}px; left: {1}px; background-color: {2};">
+                    <div class="sticker-name">{3}</div>
+                    <div class="control">
+                      <button class="add-item">항목 추가</button>
+                      <button class="remove-sticker">스티커 삭제</button>
+                    </div>
+                  </div>`;
+
+  const stickerItem = `<div class="draggable">
+                        <input type="text" name="content" placeholder="내용을 입력하세요." class="content">
+                        <div class="control">
+                          <button class="remove-item">삭제</button>
+                        </div>
+                      </div>`;
+
+  String.prototype.format = function () {
+    var formatted = this;
+    for (var i = 0; i < arguments.length; i++) {
+      var regexp = new RegExp("\\{" + i + "\\}", "gi");
+      formatted = formatted.replace(regexp, arguments[i]);
+    }
+    return formatted;
+  };
+
+  // 요구사항 반영용('항목 삭제버튼에 대한 이벤트 핸들링을 해당 버튼에 등록하는 것이 아닌 항목에 등록하여 이벤트 위임방식으로 구현') - board.addEventListener("mouseup", onMouseUp)에 필터링해서 처리해도 됨
+  board.querySelectorAll(".draggable").forEach((draggable) => {
+    draggable.addEventListener("click", (event) => {
+      if (Iam(event.target.parentNode, "control")) {
+        if (Iam(event.target, "remove-item")) {
+          // 항목을 삭제
+          event.target.closest(".draggable").remove();
+        }
+      }
+    });
+  });
+
+  let element = null; // 움직일 대상(스티커, 스티커 항목)
   let ghost = null;
 
-  let x = 0;
-  let y = 0;
+  const ghostShadow = `<div class="shadow"></div>`;
 
   board.addEventListener("mousedown", (event) => {
+    if (Iam(event.target.parentNode, "control")) {
+      if (Iam(event.target, "add-item")) {
+        // 스티커 항목을 추가
+        event.target.closest(".container").innerHTML += stickerItem;
+      } else if (event.target.id === "add-sticker") {
+        // 스티커 추가
+        nextPutTop += 30;
+        nextPutLeft += 20;
+        board.innerHTML += sticker.format(
+          nextPutTop,
+          nextPutLeft,
+          stickerColorPallete[0],
+          `Sticker${++stickerCount}`
+        );
+
+        stickerColorPallete.push(stickerColorPallete.shift());
+      } else if (Iam(event.target, "remove-sticker")) {
+        // 스티커(컨테이너)를 삭제
+        event.target.closest(".container").remove();
+      }
+    }
+
+    if (event.target.tagName === "INPUT" || event.target.tagName === "BUTTON")
+      return;
+
     event.preventDefault();
 
     // 움직일 대상에 대한 전 처리
-    if (WhoIam(event.target, "container")) {
-      element = event.target;
-
-      element.style.zIndex =
-        findMaxZIndex(board.querySelectorAll(".container")) + 1;
-      element.style.margin = 0;
-    } else if (WhoIam(event.target, "draggable")) {
+    if (Iam(event.target, "draggable")) {
       element = event.target;
 
       ghost = element.cloneNode(true);
       ghost.classList.add("ghost");
-      ghost.innerHTML += "ghost";
       event.target.after(ghost);
 
       element.style.zIndex =
         findMaxZIndex(board.querySelectorAll(".draggable")) + 1;
+      element.style.margin = 0;
+    } else if (event.target.closest(".container")) {
+      element = event.target.closest(".container");
+
+      element.style.zIndex =
+        findMaxZIndex(board.querySelectorAll(".container")) + 1;
       element.style.margin = 0;
     }
 
@@ -64,7 +136,6 @@ function debounce(callback, limit = 100) {
   board.addEventListener("mousemove", (event) => {
     if (element === null) return;
 
-    console.log("board mousemove");
     debounce(onMouseMove(event), 16 /* 60Hz */);
   });
 
@@ -95,7 +166,7 @@ function debounce(callback, limit = 100) {
       y = event.clientY;
 
       // draggable일 경우, 별도처리
-      if (WhoIam(element, "draggable")) resolve(element);
+      if (Iam(element, "draggable")) resolve(element);
     })
       .then((draggable) => {
         // 각 element의 상자 중심을 기준으로 맨해튼 거리 측정해서 가장 가까운 container찾기
@@ -109,8 +180,6 @@ function debounce(callback, limit = 100) {
           if (closest.offset > manhattnDistance)
             closest = { offset: manhattnDistance, element: container };
         }
-        console.log(Array.from(board.querySelectorAll(".container")), closest);
-        console.log(closest.element);
 
         const closestContainer = closest.element;
 
@@ -150,7 +219,7 @@ function debounce(callback, limit = 100) {
     return conainerZIndexMax ?? 0;
   }
 
-  function WhoIam(element, className) {
+  function Iam(element, className) {
     return element.classList.contains(className);
   }
 
@@ -177,11 +246,13 @@ function debounce(callback, limit = 100) {
   }
 
   function swapChildren(nodeA, nodeB) {
-    const parentA = nodeA.parentNode;
+    if (!nodeA || !nodeB) return;
+
+    const parentA = nodeA.parentNode ?? nodeB.parentNode;
     const siblingA = nodeA.nextSibling === nodeB ? nodeA : nodeA.nextSibling;
 
     // Move `nodeA` to before the `nodeB`
-    nodeB.parentNode.insertBefore(nodeA, nodeB);
+    parentA.insertBefore(nodeA, nodeB);
 
     // Move `nodeB` to before the sibling of `nodeA`
     parentA.insertBefore(nodeB, siblingA);
