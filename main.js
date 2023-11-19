@@ -1,5 +1,3 @@
-const draggableContainers = document.querySelectorAll(".container");
-
 function random(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -130,13 +128,11 @@ function debounce(callback, limit = 100) {
       element = event.target;
 
       element.style.zIndex =
-        findMaxZIndex(document.querySelectorAll(".container")) + 1;
+        findMaxZIndex(board.querySelectorAll(".container")) + 1;
     } else if (WhoIam(event.target, "draggable")) {
       element = event.target;
-
       element.style.zIndex =
-        findMaxZIndex(document.querySelectorAll(".draggable")) + 1;
-
+        findMaxZIndex(board.querySelectorAll(".draggable")) + 1;
       ghost = element.cloneNode(true);
       ghost.classList.add("ghost");
       ghost.innerHTML += "ghost";
@@ -164,7 +160,7 @@ function debounce(callback, limit = 100) {
   board.addEventListener("mousemove", (event) => {
     if (element === null) return;
 
-    console.log("board mousemove", element);
+    console.log("board mousemove");
     debounce(onMouseMove(event), 16 /* 60Hz */);
   });
 
@@ -186,8 +182,6 @@ function debounce(callback, limit = 100) {
       const dx = event.clientX - x;
       const dy = event.clientY - y;
 
-      console.log(`dx : ${dx}, dy : ${dy}`);
-
       // 마우스 이동 거리 만큼 Element의 top, left 위치값에 반영
       element.style.top = `${element.offsetTop + dy}px`;
       element.style.left = `${element.offsetLeft + dx}px`;
@@ -198,7 +192,42 @@ function debounce(callback, limit = 100) {
 
       // draggable일 경우, 별도처리
       if (WhoIam(element, "draggable")) resolve(element);
-    }).then((draggable) => {});
+    })
+      .then((draggable) => {
+        // 각 element의 상자 중심을 기준으로 맨해튼 거리 측정해서 가장 가까운 container찾기
+        let closest = { offset: Number.POSITIVE_INFINITY, element: null };
+        for (let container of board.querySelectorAll(".container")) {
+          const dx = getManhattnDistance(draggable, container);
+
+          const manhattnDistance =
+            dx.closestHorizonalLineDy + dx.closestVerticalLineDx;
+
+          if (closest.offset > manhattnDistance)
+            closest = { offset: manhattnDistance, element: container };
+        }
+        console.log(Array.from(board.querySelectorAll(".container")), closest);
+        console.log(closest.element);
+
+        const closestContainer = closest.element;
+
+        return [closestContainer, draggable];
+      })
+      .then(([closestContainer, draggable]) => {
+        let closest = { offset: Number.POSITIVE_INFINITY, element: null };
+
+        for (let child of closestContainer.querySelectorAll(".draggable")) {
+          const dx = getManhattnDistance(draggable, child);
+
+          const manhattnDistance = dx.closestVerticalLineDx;
+
+          if (closest.offset > manhattnDistance) {
+            closest = { offset: manhattnDistance, element: child };
+          }
+        }
+
+        closestContainer.appendChild(ghost);
+        swapChildren(ghost, closest.element);
+      });
   }
 
   function findMaxZIndex(elements) {
@@ -219,5 +248,38 @@ function debounce(callback, limit = 100) {
 
   function WhoIam(element, className) {
     return element.classList.contains(className);
+  }
+
+  function getManhattnDistance(baseElement, element) {
+    const centerX =
+      baseElement.getBoundingClientRect().left +
+      baseElement.getBoundingClientRect().width / 2;
+    const centerY =
+      baseElement.getBoundingClientRect().top +
+      baseElement.getBoundingClientRect().height / 2;
+
+    // element의 센터
+    const closestVerticalLineDx = Math.min(
+      Math.abs(element.getBoundingClientRect().top - centerY),
+      Math.abs(element.getBoundingClientRect().bottom - centerY)
+    );
+
+    const closestHorizonalLineDy = Math.min(
+      Math.abs(element.getBoundingClientRect().left - centerX),
+      Math.abs(element.getBoundingClientRect().right - centerX)
+    );
+
+    return { closestVerticalLineDx, closestHorizonalLineDy };
+  }
+
+  function swapChildren(nodeA, nodeB) {
+    const parentA = nodeA.parentNode;
+    const siblingA = nodeA.nextSibling === nodeB ? nodeA : nodeA.nextSibling;
+
+    // Move `nodeA` to before the `nodeB`
+    nodeB.parentNode.insertBefore(nodeA, nodeB);
+
+    // Move `nodeB` to before the sibling of `nodeA`
+    parentA.insertBefore(nodeB, siblingA);
   }
 })();

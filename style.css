@@ -15,9 +15,12 @@
 
   /* 높이 지정 */
   min-height: 32rem;
+  min-width: 100px;
 
   display: inline-block;
   background-color: green;
+
+  /* 경고! : margin은 어느것도 주면 안됨 */
 }
 .draggable {
   /* 커서를 이동형식으로 주고, 위치를 절대형식으로 지정 */
@@ -34,6 +37,8 @@
   border: 1px solid #cbd5e0;
   height: 8rem;
   width: 8rem;
+
+  /* 경고! : margin은 어느것도 주면 안됨 */
 }
 
 .draggable > * {
