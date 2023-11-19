@@ -35,12 +35,11 @@ function debounce(callback, limit = 100) {
                     </div>
                   </div>`;
 
-  const stickerItem = `<div class="draggable">
+  const stickerItem = `
                         <input type="text" name="content" placeholder="내용을 입력하세요." class="content">
                         <div class="control">
                           <button class="remove-item">삭제</button>
-                        </div>
-                      </div>`;
+                        </div>`;
 
   String.prototype.format = function () {
     var formatted = this;
@@ -51,28 +50,32 @@ function debounce(callback, limit = 100) {
     return formatted;
   };
 
-  // 요구사항 반영용('항목 삭제버튼에 대한 이벤트 핸들링을 해당 버튼에 등록하는 것이 아닌 항목에 등록하여 이벤트 위임방식으로 구현') - board.addEventListener("mouseup", onMouseUp)에 필터링해서 처리해도 됨
-  board.querySelectorAll(".draggable").forEach((draggable) => {
-    draggable.addEventListener("click", (event) => {
-      if (Iam(event.target.parentNode, "control")) {
-        if (Iam(event.target, "remove-item")) {
-          // 항목을 삭제
-          event.target.closest(".draggable").remove();
-        }
-      }
-    });
-  });
-
   let element = null; // 움직일 대상(스티커, 스티커 항목)
   let ghost = null;
 
   const ghostShadow = `<div class="shadow"></div>`;
 
   board.addEventListener("mousedown", (event) => {
+    console.log(event.target, event.target.tagName);
     if (Iam(event.target.parentNode, "control")) {
       if (Iam(event.target, "add-item")) {
         // 스티커 항목을 추가
-        event.target.closest(".container").innerHTML += stickerItem;
+        let draggable = document.createElement("div");
+        draggable.innerHTML = stickerItem;
+        draggable.setAttribute("class", "draggable");
+        event.target.closest(".container").appendChild(draggable);
+
+        // 요구사항 반영용('항목 삭제버튼에 대한 이벤트 핸들링을 해당 버튼에 등록하는 것이 아닌 항목에 등록하여 이벤트 위임방식으로 구현') - board.addEventListener("mouseup", onMouseUp)에 필터링해서 처리해도 됨
+        draggable.addEventListener("click", (event) => {
+          console.log("항목을 삭제해야합니다");
+          if (Iam(event.target.parentNode, "control")) {
+            if (Iam(event.target, "remove-item")) {
+              console.log("항목을 삭제해야합니다");
+              // 항목을 삭제
+              event.target.closest(".draggable").remove();
+            }
+          }
+        });
       } else if (event.target.id === "add-sticker") {
         // 스티커 추가
         nextPutTop += 30;
@@ -94,8 +97,6 @@ function debounce(callback, limit = 100) {
     if (event.target.tagName === "INPUT" || event.target.tagName === "BUTTON")
       return;
 
-    event.preventDefault();
-
     // 움직일 대상에 대한 전 처리
     if (Iam(event.target, "draggable")) {
       element = event.target;
@@ -107,12 +108,14 @@ function debounce(callback, limit = 100) {
       element.style.zIndex =
         findMaxZIndex(board.querySelectorAll(".draggable")) + 1;
       element.style.margin = 0;
+      event.preventDefault();
     } else if (event.target.closest(".container")) {
       element = event.target.closest(".container");
 
       element.style.zIndex =
         findMaxZIndex(board.querySelectorAll(".container")) + 1;
       element.style.margin = 0;
+      event.preventDefault();
     }
 
     // 움직일 대상에 대한 처리
