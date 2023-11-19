@@ -170,7 +170,7 @@ function debounce(callback, limit = 100) {
     // 스티커 항목이 대상이 되는 경우 처리해야할 사항들
     if (ghost) {
       element.removeAttribute("style");
-      ghost.remove();
+      ghost.replaceWith(element);
     }
 
     element = ghost = null;
