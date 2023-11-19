@@ -4,7 +4,6 @@
 }
 
 .container:nth-child(n + 2) {
-  margin-top: 1rem;
   background-color: #66c2a5;
 }
 
