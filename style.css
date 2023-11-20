@@ -6,7 +6,7 @@
 
 .container {
   /* 중앙 정렬 */
-  cursor: move;
+  cursor: grab;
   align-items: center;
   display: flex;
   justify-content: center;
@@ -25,7 +25,6 @@
 
 .draggable {
   /* 커서를 이동형식으로 주고, 위치를 절대형식으로 지정 */
-  cursor: grab;
   position: relative;
   user-select: none;
 
@@ -47,16 +46,19 @@
   /* 경고! : margin은 어느것도 주면 안됨 */
 }
 
-.draggable > * {
-  cursor: default;
-}
-
-.draggable > input[type="text"] {
+input[type="text"].sticker-name,
+input[type="text"].content {
   background-color: transparent;
   color: #222;
   border: none;
   cursor: text;
   margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.grabbing > input[type="text"].sticker-name,
+.grabbing > .draggable > input[type="text"].content {
+  cursor: grab;
 }
 
 .draggable.ghost {
@@ -73,12 +75,6 @@
   background-color: red;
   z-index: -1;
 } */
-
-.draggable > input[type="text"]:hover {
-  background-color: transparent;
-  border-bottom: solid #aaa 1px;
-  cursor: text;
-}
 
 .control {
   margin-bottom: 10px;
